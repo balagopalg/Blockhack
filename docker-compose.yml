@@ -1,0 +1,124 @@
+version: '2.0'
+
+services:
+    
+    api:
+        container_name: api2
+        image: api
+        build: ./api
+        restart: always
+        ports:
+          - "8001:8000"
+        volumes:
+          - "./api/src:/usr/share/workdir/api/src"
+        command: bash -c "npm run app"
+        depends_on:
+          - "mongodb"
+
+    mongodb:
+        container_name: mongodb
+        image: mongo
+        volumes:
+            - "./mongo/data:/data/db"
+        ports:
+          - "27017:27017"
+        expose: 
+            - "27017"
+
+    mongo-express:
+        container_name: mongoUI
+        image: mongo-express
+        restart: always
+        ports:
+          - 8081:8081
+        depends_on: 
+          - mongodb
+        environment: 
+          ME_CONFIG_MONGODB_SERVER: mongodb
+
+    sawtooth-TP:
+        container_name: sawtooth-tp
+        image: sawtooth-tp
+        build: ./Blockchain/processor
+        ports:
+          - "9000:9000"
+        volumes:
+          - "./Blockchain/processor/src:/usr/share/workdir/processor/src"
+        command: bash -c "npm run start"
+        depends_on:
+          - "sawtooth-rest-api"
+          - "settings-tp"
+          - "validator"
+
+    sawtooth-client:
+      container_name: sawtooth-client
+      image: sawtooth-client
+      build: ./Blockchain/client
+      ports:
+        - "3000:3000"
+      volumes:
+        - "./Blockchain/client/src:/usr/share/workdir/client/src"
+      command: bash -c "node src/app.js"
+      depends_on:
+        - "validator"
+        - "sawtooth-TP"
+    sawtooth-eventhandle:
+      container_name: sawtooth-eventhandle
+      image: sawtooth-eventhandle
+      build: ./Blockchain/eventHandle
+      ports:
+        - "9001:9000"
+      volumes:
+        - "./Blockchain/eventHandle/src/:/usr/share/workdir/eventHandle/src"
+      command: bash -c "node src/app.js"
+      depends_on:
+        - "sawtooth-rest-api"
+        - "settings-tp"
+        - "validator"
+
+    #*******************************************Sawtooth*************************************************#
+
+    sawtooth-rest-api:
+        container_name: rest-api
+        image: hyperledger/sawtooth-rest-api:1.0
+        expose:
+          - "8008"
+        depends_on:
+          - validator
+        entrypoint: |
+          sawtooth-rest-api -vvv
+            --connect tcp://validator:4004
+            --bind sawtooth-rest-api:8008
+        ports:
+          - "8008:8008"
+
+    settings-tp:
+        container_name: settings
+        image: hyperledger/sawtooth-settings-tp:1.0
+        depends_on:
+            - validator
+        command: settings-tp -vv --connect tcp://validator:4004
+
+    validator:
+        container_name: validator
+        image: hyperledger/sawtooth-validator:1.0
+        expose:
+            - "4004"
+        volumes: 
+            - "./Blockchain/validator/data:/var/lib/sawtooth/"
+            - "./Blockchain/validator/userKey:/root/.sawtooth/keys/"
+            - "./Blockchain/validator/validatorKey:/etc/sawtooth/keys/"
+            - "./Blockchain/validator/policy:/etc/sawtooth/policy/"
+        command: |
+            bash -c "
+            if [ ! -f /etc/sawtooth/keys/validator.priv ]; then
+            sawadm keygen &&
+            sawtooth keygen my_key &&
+            sawset genesis -k /root/.sawtooth/keys/my_key.priv &&
+            sawadm genesis config-genesis.batch
+            fi;
+            sawtooth-validator -vvv \
+                --endpoint tcp://validator:8800 \
+                --bind component:tcp://eth0:4004 \
+                --bind network:tcp://eth0:8800
+            "

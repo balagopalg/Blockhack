@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Local Branch Balance</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Awesome Insurance Company</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li class="active"><a href="#">Home</a></li>
+      <li><a href="#">Internet Banking</a></li>
+      <li><a href="/transfer_to_local_bank">Transfer</a></li>
+      <li><a href="#">Balance</a></li><br><br>
+    </ul>
+  </div>
+</nav>
+    <form name="transferForm" method="post" action="transfer_to_local_bank">
+      <table width="20%" bgcolor="0099CC" align="center">
+      
+      <tr>
+      <td colspan=2><center><font size=4><b>Transfer Form</b></font></center></td>
+      </tr>
+      
+      <tr>
+      <td>Branch Balance(INR)</td>
+      <td><input type="text" size=25 name="Balance" id="bal"></td>
+      </tr>
+      <tr>
+      
+      <tr>
+      <td><input type="submit" onclick="return local_branch_transfer()" value="Fetch"></td>
+      </tr>
+      
+      </table>
+      </form>
+
+    
+  </body>
+</html>
